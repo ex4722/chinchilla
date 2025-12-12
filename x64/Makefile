@@ -8,12 +8,11 @@ export LDFLAGS = -T $(CURRENT_DIR)/linker.ld -std=gnu99 -O2 -Wall -Wextra -nostd
 export ASMFLAGS = -felf64
 export CC:=$(CC64)
 
-OBJECTS := $(shell find $(BUILD_DIR) -name '*.o')
 
 
 
 kernel64: src | $(BUILD_DIR)
-	$(CC) $(LDFLAGS) -o $@ $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $@ $(shell find $(BUILD_DIR) -name '*.o')
 
 .PHONY: src
 src:

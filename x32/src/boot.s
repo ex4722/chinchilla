@@ -132,7 +132,7 @@ global die
 die:
     hlt
 
-section .gdt 
+section .gdt
 ; Creates the data region for the GDT
 ; https://wiki.osdev.org/Setting_Up_Long_Mode#Entering_Long_Mode 
 GDT64:

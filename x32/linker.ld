@@ -34,12 +34,14 @@ SECTIONS {
     stack_top = .;
 
     kernel32_reserved_start = ALIGN(4k);
-    kernel_pgd = ALIGN(4K);
+    /*kernel_pgd = ALIGN(4K);*/
+    kernel_pgd = kernel32_reserved_start;
 	. += 0x1000;
     kernel_pud = ALIGN(4K);
 	. += 0x1000;
 
     .gdt BLOCK(4k) : ALIGN(4k) {
+        *(.gdt)
     }
     kernel32_reserved_end = ALIGN(4k);
     kernel32_end = .;
