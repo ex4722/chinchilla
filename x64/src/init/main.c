@@ -31,8 +31,7 @@ int main64(struct kernel_32_info *ptr) {
         *(multiboot_info_t *)(uint64_t)info.multiboot_info;
     init_memory(&info, &multiboot_info);
     init_idt();
-    // shelf for future, fuck this bitch
-    // get_apic_addr();
+    get_apic_addr();
     print_welcome_banner();
     for (;;) {
     }

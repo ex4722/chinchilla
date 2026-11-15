@@ -83,29 +83,43 @@ u64 get_apic_addr() {
     // https://wiki.osdev.org/ACPI#Switching_to_ACPI_Mode
     struct MADT *madt = find_madt();
     ASSERT(madt == NULL, "MADT Not found");
-    void *madt_end = madt + madt->h.Length;
+
+    PINFO("Madt found @ 0x%p with length of %d\n", madt, madt->h.Length);
+
+    // if bit 0 in flags mask all the 8259 PIC's interrupts
+    // APIC replaces this???
+    // if(madt->flags & 1){
+    // } 
+
+    int e = 0;
     // get the end of the madt struct which is start of apic entries
-    struct madt_header *madt_cursor = (struct madt_header *)(madt + 1);
+    struct madt_header *madt_cursor = (struct madt_header *)(&madt->data);
+    void *madt_end = (void*) ((u64)madt+ madt->h.Length);
     while ((void *)madt_cursor < madt_end) {
+        e += 1;
+        if (e > 30){
+            break;
+        }
         printf("Processin type %d of length %d @ %p\n", madt_cursor->type, madt_cursor->length, madt_cursor);
         switch (madt_cursor->type) {
         case ET_PROCESSOR_APIC:
             struct processor_local_apic_entry *processor_apic =
                 (struct processor_local_apic_entry *)madt_cursor;
             if (processor_apic->flags & APIC_CPU_ENABLED) {
-                printf("Processor %d is enabled", processor_apic->acpi_processor_id);
+                printf("Processor %d is enabled\n", processor_apic->acpi_processor_id);
             } 
             if (!(processor_apic->flags & APIC_ONLINE_CAP)) {
-                printf("Processor %d is not capable of being turned on",
+                printf("Processor %d is not capable of being turned on\n",
                         processor_apic->apic_id);
             }
-            madt_cursor = (struct madt_header *)(processor_apic + 1);
             break;
         case ET_IO_APIC:
+            struct io_apic_entry * apic_entry = (struct io_apic_entry *)madt_cursor;
             break;
         case ET_ADDR_OVERRIDE_APIC:
             break;
         }
+        madt_cursor = (struct madt_header *)((u64)madt_cursor + madt_cursor->length);
     }
 
     return madt->apci_address;

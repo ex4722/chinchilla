@@ -123,6 +123,7 @@ struct MADT{
     struct ACPISDTHeader h;
     u32 apci_address;
     u32 flags;
+    char data[];
 };
 
 // Entry type's in APIC 
