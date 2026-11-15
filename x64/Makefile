@@ -12,7 +12,7 @@ export CC:=$(CC64)
 
 
 kernel64: src | $(BUILD_DIR)
-	$(CC) $(LDFLAGS) -o $@ $(shell find $(BUILD_DIR) -name '*.o')
+	$(CC) $(LDFLAGS) -o $(BUILD_DIR)/$@ $(shell find $(BUILD_DIR) -name '*.o')
 
 .PHONY: src
 src:

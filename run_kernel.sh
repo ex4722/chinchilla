@@ -1,2 +1,2 @@
 #!/bin/bash 
-qemu-system-x86_64  -m 4G -cpu host -kernel x32/build/kernel32  -device loader,file="x64/kernel64" -serial stdio -enable-kvm -nographic -monitor null -s -S 
+qemu-system-x86_64  -m 4G -cpu qemu64 -kernel x32/build/kernel32  -device loader,file="x64/build/kernel64" -serial stdio -nographic -monitor null -s -S 
