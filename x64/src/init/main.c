@@ -4,6 +4,7 @@
 #include "mm/paging.h"
 #include "utils/printf.h"
 #include "irq/idt.h"
+#include "utils/acpi.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -29,10 +30,9 @@ int main64(struct kernel_32_info *ptr) {
     multiboot_info_t multiboot_info =
         *(multiboot_info_t *)(uint64_t)info.multiboot_info;
     init_memory(&info, &multiboot_info);
-    PINFO("Memory Successfully initialized\n");
-    print_welcome_banner();
     init_idt();
-    asm("int3");
+    get_apic_addr();
+    print_welcome_banner();
     for (;;) {
     }
 }

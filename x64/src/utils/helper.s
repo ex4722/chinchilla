@@ -12,6 +12,11 @@ inb:
 	mov dx, di
 	in al, dx
 	ret
+global inw
+inw:
+	mov dx, di
+	in ax, dx
+	ret
 
 ; loads value into the lidt register
 ; extern void lidt(u64 idt_address, u64 size);

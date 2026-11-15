@@ -48,4 +48,5 @@ void init_idt(void) {
         .offset = (u64)idt64,
     };
     lidt(&idtr);
+    PINFO("IDT Setup finished\n");
 }

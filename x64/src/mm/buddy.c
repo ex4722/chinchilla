@@ -190,6 +190,7 @@ void init_memory(struct kernel_32_info *info, multiboot_info_t *multiboot) {
             cur_start = next_freeable(info, 0, 0, &real_len);
         }
     }
+    PINFO("Memory Successfully initialized\n");
 }
 
 u64 free_pages(struct page_struct *page, u64 order) {
