@@ -87,7 +87,7 @@ u64 get_apic_addr() {
     // get the end of the madt struct which is start of apic entries
     struct madt_header *madt_cursor = (struct madt_header *)(madt + 1);
     while ((void *)madt_cursor < madt_end) {
-        printf("Processin type %d of length %d\n", madt_cursor->type, madt_cursor->length);
+        printf("Processin type %d of length %d @ %p\n", madt_cursor->type, madt_cursor->length, madt_cursor);
         switch (madt_cursor->type) {
         case ET_PROCESSOR_APIC:
             struct processor_local_apic_entry *processor_apic =
