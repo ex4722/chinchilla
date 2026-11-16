@@ -11,6 +11,7 @@
 #define MADT_HEADER "APIC"
 #define MADT_HEADER_LENGTH (sizeof(MADT_HEADER) - 1)
 
+
 // https://wiki.osdev.org/RSDP#Checksum_validation
 bool rsdp_checksum(struct RSDP_t *rsdp) {
     u8 sum = 0;
@@ -52,6 +53,25 @@ u64 find_rsdp() {
         }
     }
     return 0;
+}
+
+
+// IOREGSEL and IOREGWIN MMIO register selects to access IO APIC registers 
+// IOREGWIN = IOREGSEL + 0x10
+// https://wiki.osdev.org/IOAPIC
+void write_ioapic_register(uintptr_t apic_base, uint8_t offset, uint32_t val){
+    *(volatile uint32_t *)apic_base = offset; 
+    *(volatile uint32_t *)(apic_base + 0x10) = val;
+}
+
+uint32_t read_ioapic_register(uintptr_t apic_base, uint8_t offset){
+    *(volatile uint32_t *)apic_base = offset; 
+    return  *(volatile uint32_t *)(apic_base + 0x10);
+}
+
+
+uint32_t get_ioapic_version(uintptr_t apic_base){
+    return read_ioapic_register(apic_base, IOAPICVER);
 }
 
 struct MADT *find_madt() {
@@ -114,7 +134,12 @@ u64 get_apic_addr() {
             }
             break;
         case ET_IO_APIC:
-            struct io_apic_entry * apic_entry = (struct io_apic_entry *)madt_cursor;
+            // https://github.com/dreamportdev/Osdev-Notes/blob/master/02_Architecture/07_APIC.md 
+            struct io_apic_entry * io_apic_entry = (struct io_apic_entry *)madt_cursor;
+            u32 version = get_ioapic_version(io_apic_entry->io_apic_address);
+            size_t number_of_inputs = ((version >> 16) & 0xFF) + 1;
+
+            printf("APIC ID %d handles interupt number %d to %d io_adder 0x%p\n", io_apic_entry->io_apic_id, io_apic_entry->global_interrupt_base, io_apic_entry->global_interrupt_base + number_of_inputs, io_apic_entry->io_apic_address);
             break;
         case ET_ADDR_OVERRIDE_APIC:
             break;

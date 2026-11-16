@@ -131,9 +131,17 @@ struct MADT{
 #define ET_IO_APIC 1 
 #define ET_IO_INT_APIC 2 
 #define ET_IO_NON_MASK_INT_SRC_APIC 3 
-#define ET_IO_NON_MASK_INT_APIC 4
+#define ET_NON_MASK_INT_APIC 4
 #define ET_ADDR_OVERRIDE_APIC 5 
+
 #define ET_x2APIC 9
+
+
+
+// IO_APIC Register offsets
+#define IOAPICID 0 
+#define IOAPICVER 1
+#define IOAPICARB 2
 
 // Flags for the various APIC entires
 #define APIC_CPU_ENABLED (1)
