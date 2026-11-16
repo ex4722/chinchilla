@@ -11,7 +11,6 @@
 #define MADT_HEADER "APIC"
 #define MADT_HEADER_LENGTH (sizeof(MADT_HEADER) - 1)
 
-
 // https://wiki.osdev.org/RSDP#Checksum_validation
 bool rsdp_checksum(struct RSDP_t *rsdp) {
     u8 sum = 0;
@@ -55,22 +54,20 @@ u64 find_rsdp() {
     return 0;
 }
 
-
-// IOREGSEL and IOREGWIN MMIO register selects to access IO APIC registers 
+// IOREGSEL and IOREGWIN MMIO register selects to access IO APIC registers
 // IOREGWIN = IOREGSEL + 0x10
 // https://wiki.osdev.org/IOAPIC
-void write_ioapic_register(uintptr_t apic_base, uint8_t offset, uint32_t val){
-    *(volatile uint32_t *)apic_base = offset; 
+void write_ioapic_register(uintptr_t apic_base, uint8_t offset, uint32_t val) {
+    *(volatile uint32_t *)apic_base = offset;
     *(volatile uint32_t *)(apic_base + 0x10) = val;
 }
 
-uint32_t read_ioapic_register(uintptr_t apic_base, uint8_t offset){
-    *(volatile uint32_t *)apic_base = offset; 
-    return  *(volatile uint32_t *)(apic_base + 0x10);
+uint32_t read_ioapic_register(uintptr_t apic_base, uint8_t offset) {
+    *(volatile uint32_t *)apic_base = offset;
+    return *(volatile uint32_t *)(apic_base + 0x10);
 }
 
-
-uint32_t get_ioapic_version(uintptr_t apic_base){
+uint32_t get_ioapic_version(uintptr_t apic_base) {
     return read_ioapic_register(apic_base, IOAPICVER);
 }
 
@@ -109,42 +106,61 @@ u64 get_apic_addr() {
     // if bit 0 in flags mask all the 8259 PIC's interrupts
     // APIC replaces this???
     // if(madt->flags & 1){
-    // } 
+    // }
 
     int e = 0;
     // get the end of the madt struct which is start of apic entries
     struct madt_header *madt_cursor = (struct madt_header *)(&madt->data);
-    void *madt_end = (void*) ((u64)madt+ madt->h.Length);
+    void *madt_end = (void *)((u64)madt + madt->h.Length);
     while ((void *)madt_cursor < madt_end) {
         e += 1;
-        if (e > 30){
+        if (e > 30) {
             break;
         }
-        printf("Processin type %d of length %d @ %p\n", madt_cursor->type, madt_cursor->length, madt_cursor);
+        printf("Processin type %d of length %d @ %p\n", madt_cursor->type,
+               madt_cursor->length, madt_cursor);
         switch (madt_cursor->type) {
         case ET_PROCESSOR_APIC:
             struct processor_local_apic_entry *processor_apic =
                 (struct processor_local_apic_entry *)madt_cursor;
             if (processor_apic->flags & APIC_CPU_ENABLED) {
-                printf("Processor %d is enabled\n", processor_apic->acpi_processor_id);
-            } 
-            if (!(processor_apic->flags & APIC_ONLINE_CAP)) {
-                printf("Processor %d is not capable of being turned on\n",
-                        processor_apic->apic_id);
+                printf("Processor %d is able to be enabled\n",
+                       processor_apic->acpi_processor_id);
+            } else {
+                if (!(processor_apic->flags & APIC_ONLINE_CAP)) {
+                    printf("Processor %d is capable of being turned on\n",
+                           processor_apic->apic_id);
+                } else {
+                    printf("Processor %d is not capable of being turned on\n",
+                           processor_apic->apic_id);
+                }
             }
             break;
         case ET_IO_APIC:
-            // https://github.com/dreamportdev/Osdev-Notes/blob/master/02_Architecture/07_APIC.md 
-            struct io_apic_entry * io_apic_entry = (struct io_apic_entry *)madt_cursor;
+            // https://github.com/dreamportdev/Osdev-Notes/blob/master/02_Architecture/07_APIC.md
+            struct io_apic_entry *io_apic_entry =
+                (struct io_apic_entry *)madt_cursor;
             u32 version = get_ioapic_version(io_apic_entry->io_apic_address);
             size_t number_of_inputs = ((version >> 16) & 0xFF) + 1;
 
-            printf("APIC ID %d handles interupt number %d to %d io_adder 0x%p\n", io_apic_entry->io_apic_id, io_apic_entry->global_interrupt_base, io_apic_entry->global_interrupt_base + number_of_inputs, io_apic_entry->io_apic_address);
+            printf(
+                "APIC ID %d handles interupt number %d to %d io_adder 0x%p\n",
+                io_apic_entry->io_apic_id, io_apic_entry->global_interrupt_base,
+                io_apic_entry->global_interrupt_base + number_of_inputs,
+                io_apic_entry->io_apic_address);
+            break;
+        case ET_IO_INT_APIC:
+            struct io_apic_interrupt_source_override_entry *io_override =
+                (struct io_apic_interrupt_source_override_entry *)madt_cursor;
+            printf("Bus src %d IRQ src %d Global Inter %d Flags %d\n",
+                   io_override->bus_source, io_override->irq_source,
+                   io_override->global_interrupt, io_override->flags);
             break;
         case ET_ADDR_OVERRIDE_APIC:
             break;
         }
-        madt_cursor = (struct madt_header *)((u64)madt_cursor + madt_cursor->length);
+        madt_cursor =
+            (struct madt_header *)((u64)madt_cursor + madt_cursor->length);
     }
 
     return madt->apci_address;
