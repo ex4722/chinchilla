@@ -44,13 +44,39 @@ struct RSDT {
     u32 SDT_pointers[];
 };
 
+// Types for lame_address_struct 
+enum acpi_address_space: u8 {
+    ACPI_GAS_SYSTEM_MEMORY  = 0x00,
+    ACPI_GAS_SYSTEM_IO      = 0x01,
+    ACPI_GAS_PCI_CONFIG     = 0x02,
+    ACPI_GAS_EMBEDDED_CTRL  = 0x03,
+    ACPI_GAS_SMBUS          = 0x04,
+    ACPI_GAS_SYSTEM_CMOS    = 0x05,
+    ACPI_GAS_PCI_BAR_TARGET = 0x06,
+    ACPI_GAS_IPMI           = 0x07,
+    ACPI_GAS_GPIO           = 0x08,
+    ACPI_GAS_GENERIC_SERIAL = 0x09,
+    ACPI_GAS_PCC            = 0x0A,
+    /* 0x0B-0x7F reserved */
+    ACPI_GAS_OEM_START      = 0x80,  /* 0x80-0xFF OEM defined */
+};
+
+enum acpi_address_space_access {
+    ACPI_GAS_ACCESS_UNDEFINED = 0,  /* legacy: infer from bit_width */
+    ACPI_GAS_ACCESS_BYTE      = 1,
+    ACPI_GAS_ACCESS_WORD      = 2,
+    ACPI_GAS_ACCESS_DWORD     = 3,
+    ACPI_GAS_ACCESS_QWORD     = 4,
+};
+
 struct lame_address_struct {
+    // enum acpi_address_space AddressSpace;
     u8 AddressSpace;
     u8 BitWidth;
     u8 BitOffset;
     u8 AccessSize;
     u64 Address;
-};
+}__attribute__((packed));
 
 struct FADT {
     struct ACPISDTHeader h;
@@ -117,7 +143,7 @@ struct FADT {
     struct lame_address_struct X_PMTimerBlock;
     struct lame_address_struct X_GPE0Block;
     struct lame_address_struct X_GPE1Block;
-};
+}__attribute__((packed));
 
 struct MADT{
     struct ACPISDTHeader h;
@@ -146,6 +172,8 @@ struct MADT{
 // Flags for the various APIC entires
 #define APIC_CPU_ENABLED (1)
 #define APIC_ONLINE_CAP (1<<1)
+
+
 
 // Common header structure for all MADT entries
 struct madt_header {
@@ -216,6 +244,8 @@ struct processor_local_x2apic_entry {
 
 
 u64 get_apic_addr();
+bool acpi_timer_enabled();
+bool setup_acpi_timer();
 extern void outb(u8, u8);
 extern u32 inw(u32);
 #endif

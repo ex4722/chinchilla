@@ -32,6 +32,7 @@ int main64(struct kernel_32_info *ptr) {
     init_memory(&info, &multiboot_info);
     init_idt();
     get_apic_addr();
+    setup_acpi_timer();
     print_welcome_banner();
     for (;;) {
     }

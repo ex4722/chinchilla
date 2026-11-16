@@ -11,6 +11,9 @@
 #define MADT_HEADER "APIC"
 #define MADT_HEADER_LENGTH (sizeof(MADT_HEADER) - 1)
 
+struct MADT *madt = NULL;
+struct FADT *fadt = NULL;
+
 // https://wiki.osdev.org/RSDP#Checksum_validation
 bool rsdp_checksum(struct RSDP_t *rsdp) {
     u8 sum = 0;
@@ -71,7 +74,7 @@ uint32_t get_ioapic_version(uintptr_t apic_base) {
     return read_ioapic_register(apic_base, IOAPICVER);
 }
 
-struct MADT *find_madt() {
+struct MADT *parse_rsdt() {
     struct RSDP_t *rsdp = (struct RSDP_t *)find_rsdp();
     // version 1 aka rsdp
     if (rsdp->Revision == 0) {
@@ -90,15 +93,19 @@ struct MADT *find_madt() {
             (struct ACPISDTHeader *)(u64)rsdt->SDT_pointers[i];
         if (!memcmp(entry->Signature, MADT_HEADER, MADT_HEADER_LENGTH)) {
             PINFO("FOUND %s: %#lx\n", MADT_HEADER, entry);
-            return (struct MADT *)entry;
+            madt = (struct MADT *)entry;
+        }
+        if (!memcmp(entry->Signature, FADT_HEADER, FADT_HEADER_LENGTH)) {
+            PINFO("FOUND %s: %#lx\n", FADT_HEADER, entry);
+            fadt = (struct FADT *)entry;
         }
     }
     return NULL;
 }
 
 u64 get_apic_addr() {
+    parse_rsdt();
     // https://wiki.osdev.org/ACPI#Switching_to_ACPI_Mode
-    struct MADT *madt = find_madt();
     ASSERT(madt == NULL, "MADT Not found");
 
     PINFO("Madt found @ 0x%p with length of %d\n", madt, madt->h.Length);
@@ -164,4 +171,38 @@ u64 get_apic_addr() {
     }
 
     return madt->apci_address;
+}
+
+bool acpi_timer_enabled() {
+    parse_rsdt();
+    return (fadt->PMTimerLength == 4);
+}
+
+bool setup_acpi_timer() {
+    if (!acpi_timer_enabled()) {
+        // acpi not enabled
+        return false;
+    };
+    parse_rsdt();
+    if (madt->h.Revision >= 2) {
+        if (fadt->X_PMTimerBlock.Address != 0) {
+            // use X_PMTimerBlock
+            printf("Use X_PMTimerBlock\n");
+            printf("addr space %d\n", fadt->X_PMTimerBlock.AddressSpace);
+            printf("addr space %x\n", fadt->X_PMTimerBlock.Address);
+            if (fadt->X_PMTimerBlock.AddressSpace == ACPI_GAS_SYSTEM_MEMORY) {
+                printf("Timer value is in memory %x\n", *(u32*)fadt->X_PMTimerBlock.Address);
+            }else{
+                printf("FUCK");
+            }
+        };
+    } else {
+        // use PMTimerBlock
+        printf("Use PMTimerBlock\n");
+    };
+
+    if (fadt->Flags & (1 << 8)) {
+        printf("32 bit counter\n");
+    }
+    return true;
 }
